@@ -1,33 +1,69 @@
+<?php include 'koneksi.php'; ?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PHP CRUD Railway</title>
+</head>
+<body>
+
 <?php
-
-error_reporting(E_ALL);
 ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
-// Header
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
+// Buat tabel jika belum ada
+mysqli_query($koneksi, "CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nama VARCHAR(100) NOT NULL,
+    sandi VARCHAR(255) NOT NULL
+)");
 
-// Ambil ENV Railway
-$host = getenv("MYSQLHOST");
-$user = getenv("MYSQLUSER");
-$pass = getenv("MYSQLPASSWORD");
-$db   = getenv("MYSQLDATABASE");
-$port = getenv("MYSQLPORT");
-
-// Debug cek ENV
-echo "HOST : " . $host . "<br>";
-echo "USER : " . $user . "<br>";
-echo "DB   : " . $db . "<br>";
-echo "PORT : " . $port . "<br><br>";
-
-// Koneksi
-$koneksi = mysqli_connect($host, $user, $pass, $db, $port);
-
-// Cek koneksi
-if (!$koneksi) {
-    die("Koneksi gagal : " . mysqli_connect_error());
+// Logika Create
+if (isset($_POST['tambah'])) {
+    $nama  = mysqli_real_escape_string($koneksi, $_POST['nama']);
+    $sandi = password_hash($_POST['sandi'], PASSWORD_DEFAULT); // hash password
+    mysqli_query($koneksi, "INSERT INTO users (nama, sandi) VALUES('$nama', '$sandi')");
+    header("Location: index.php");
+    exit;
 }
 
-echo "Koneksi database berhasil!";
+// Logika Delete
+if (isset($_GET['hapus'])) {
+    $id = (int) $_GET['hapus']; // cast ke integer, cegah SQL injection
+    mysqli_query($koneksi, "DELETE FROM users WHERE id=$id");
+    header("Location: index.php");
+    exit;
+}
 ?>
+
+    <h2>Tambah Data</h2>
+    <form method="POST">
+        <input type="text"     name="nama"  placeholder="Nama"  required>
+        <input type="password" name="sandi" placeholder="Sandi" required>
+        <button type="submit" name="tambah">Simpan</button>
+    </form>
+
+    <h2>Data Users</h2>
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>Nama</th>
+            <th>Sandi (hash)</th>
+            <th>Aksi</th>
+        </tr>
+        <?php
+        $data = mysqli_query($koneksi, "SELECT * FROM users");
+        while ($d = mysqli_fetch_array($data)) : ?>
+        <tr>
+            <td><?php echo $d['id']; ?></td>
+            <td><?php echo htmlspecialchars($d['nama']); ?></td>
+            <td><?php echo substr($d['sandi'], 0, 20) . '...'; ?></td>
+            <td>
+                <a href="index.php?hapus=<?php echo $d['id']; ?>"
+                   onclick="return confirm('Yakin hapus?')">Hapus</a>
+            </td>
+        </tr>
+        <?php endwhile; ?>
+    </table>
+</body>
+</html>
