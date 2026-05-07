@@ -1,33 +1,21 @@
 <?php
-
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-// Header
+// Mengizinkan semua origin (untuk development)
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
-// Ambil ENV Railway
-$host = getenv("MYSQLHOST");
-$user = getenv("MYSQLUSER");
-$pass = getenv("MYSQLPASSWORD");
-$db   = getenv("MYSQLDATABASE");
-$port = getenv("MYSQLPORT");
+// PHP akan mencoba mengambil data asli dari Railway dulu, 
+// kalau tidak ada baru pakai data di dalam kutip.
+$host = getenv('MYSQLHOST') ?: "mysql.railway.internal";
+$user = getenv('MYSQLUSER') ?: "root";
+$pass = getenv('MYSQLPASSWORD') ?: "giNTpSrtWKXiqHPifFldyZzjmPwoXiEj";
+$db   = getenv('MYSQLDATABASE') ?: "railway";
+$port = getenv('MYSQLPORT') ?: 3306;
 
-// Debug cek ENV
-echo "HOST : " . $host . "<br>";
-echo "USER : " . $user . "<br>";
-echo "DB   : " . $db . "<br>";
-echo "PORT : " . $port . "<br><br>";
-
-// Koneksi
 $koneksi = mysqli_connect($host, $user, $pass, $db, $port);
 
-// Cek koneksi
 if (!$koneksi) {
-    die("Koneksi gagal : " . mysqli_connect_error());
+    // Menampilkan error yang lebih spesifik jika gagal
+    die("Koneksi gagal: " . mysqli_connect_error());
 }
-
-echo "Koneksi database berhasil!";
 ?>
