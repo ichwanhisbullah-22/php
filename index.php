@@ -1,145 +1,69 @@
-<?php
-include "koneksi.php";
-
-if (isset($_POST['simpan'])) {
-
-    $nama = $_POST['nama'];
-    $jurusan = $_POST['jurusan'];
-    $alamat = $_POST['alamat'];
-
-    mysqli_query($koneksi, "INSERT INTO mahasiswa VALUES(
-        '',
-        '$nama',
-        '$jurusan',
-        '$alamat'
-    )");
-}
-
-$data = mysqli_query($koneksi, "SELECT * FROM mahasiswa");
-?>
-
+<?php include 'koneksi.php'; ?>
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Data Mahasiswa</title>
-
-    <style>
-
-        body{
-            font-family: Arial;
-            background: linear-gradient(to right,#141e30,#243b55);
-            padding:40px;
-            color:white;
-        }
-
-        .container{
-            width:80%;
-            margin:auto;
-            background:white;
-            color:black;
-            padding:30px;
-            border-radius:15px;
-            box-shadow:0 0 20px rgba(0,0,0,0.5);
-        }
-
-        h1{
-            text-align:center;
-            color:#243b55;
-        }
-
-        input, textarea{
-            width:100%;
-            padding:12px;
-            margin-top:10px;
-            margin-bottom:20px;
-            border-radius:10px;
-            border:1px solid #ccc;
-        }
-
-        button{
-            background:#243b55;
-            color:white;
-            padding:12px 25px;
-            border:none;
-            border-radius:10px;
-            cursor:pointer;
-        }
-
-        button:hover{
-            background:#141e30;
-        }
-
-        table{
-            width:100%;
-            border-collapse:collapse;
-            margin-top:30px;
-        }
-
-        table th{
-            background:#243b55;
-            color:white;
-            padding:12px;
-        }
-
-        table td{
-            padding:12px;
-            border-bottom:1px solid #ccc;
-        }
-
-        tr:hover{
-            background:#f1f1f1;
-        }
-
-    </style>
-
+    <title>PHP CRUD Railway</title>
 </head>
 <body>
 
-<div class="container">
+<?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
-    <h1>Input Data Mahasiswa</h1>
+// Buat tabel jika belum ada
+mysqli_query($koneksi, "CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nama VARCHAR(100) NOT NULL,
+    sandi VARCHAR(255) NOT NULL
+)");
 
+// Logika Create
+if (isset($_POST['tambah'])) {
+    $nama  = mysqli_real_escape_string($koneksi, $_POST['nama']);
+    $sandi = password_hash($_POST['sandi'], PASSWORD_DEFAULT); // hash password
+    mysqli_query($koneksi, "INSERT INTO users (nama, sandi) VALUES('$nama', '$sandi')");
+    header("Location: index.php");
+    exit;
+}
+
+// Logika Delete
+if (isset($_GET['hapus'])) {
+    $id = (int) $_GET['hapus']; // cast ke integer, cegah SQL injection
+    mysqli_query($koneksi, "DELETE FROM users WHERE id=$id");
+    header("Location: index.php");
+    exit;
+}
+?>
+
+    <h2>Tambah Data</h2>
     <form method="POST">
-
-        <input type="text" name="nama" placeholder="Nama Mahasiswa" required>
-
-        <input type="text" name="jurusan" placeholder="Jurusan" required>
-
-        <textarea name="alamat" placeholder="Alamat"></textarea>
-
-        <button type="submit" name="simpan">
-            Simpan Data
-        </button>
-
+        <input type="text"     name="nama"  placeholder="Nama"  required>
+        <input type="password" name="sandi" placeholder="Sandi" required>
+        <button type="submit" name="tambah">Simpan</button>
     </form>
 
-    <table>
-
+    <h2>Data Users</h2>
+    <table border="1">
         <tr>
-            <th>No</th>
+            <th>ID</th>
             <th>Nama</th>
-            <th>Jurusan</th>
-            <th>Alamat</th>
+            <th>Sandi (hash)</th>
+            <th>Aksi</th>
         </tr>
-
         <?php
-        $no = 1;
-
-        while($d = mysqli_fetch_array($data)){
-        ?>
-
+        $data = mysqli_query($koneksi, "SELECT * FROM users");
+        while ($d = mysqli_fetch_array($data)) : ?>
         <tr>
-            <td><?= $no++; ?></td>
-            <td><?= $d['nama']; ?></td>
-            <td><?= $d['jurusan']; ?></td>
-            <td><?= $d['alamat']; ?></td>
+            <td><?php echo $d['id']; ?></td>
+            <td><?php echo htmlspecialchars($d['nama']); ?></td>
+            <td><?php echo substr($d['sandi'], 0, 20) . '...'; ?></td>
+            <td>
+                <a href="index.php?hapus=<?php echo $d['id']; ?>"
+                   onclick="return confirm('Yakin hapus?')">Hapus</a>
+            </td>
         </tr>
-
-        <?php } ?>
-
+        <?php endwhile; ?>
     </table>
-
-</div>
-
 </body>
 </html>
